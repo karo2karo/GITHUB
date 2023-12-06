@@ -1,0 +1,310 @@
+#This playbook is ment for me to learn ansible and 
+#about high availability. The set up is of 1 web server,
+#1 VIP for 2 app servers and 1 VIP for 2 database servers.
+#This playbook was used on Oracle Linux 8 and will
+#probably not work with other distros. I used ChatGPT a lot
+#so the best practice is not on point. This does not include
+#MySQL set-up, so it needs to be done manually.
+---
+- name: Defining IP addresses
+  hosts: all
+  become: yes
+  gather_facts: yes
+#gathering facts so that my variables would be global
+  vars_prompt:
+    - name: APP_VIP
+      prompt: "Enter zabbix server VIP:"
+      private: no
+    - name: DB_VIP
+      prompt: "Enter zabbix database VIP:"
+      private: no
+    - name: WEB
+      prompt: "Enter your web server IP:"
+      private: no
+    - name: first_APP
+      prompt: "Enter first zabbix server IP:"
+      private: no
+    - name: second_APP
+      prompt: "Enter second zabbix server IP:" 
+      private: no
+    - name: first_DB
+      prompt: "Enter first database server IP:"
+      private: no
+    - name: second_DB
+      prompt: "Enter second database server IP:"
+      private: no
+  vars:
+    host_entries:
+      - { ip: "{{ APP_VIP }}", hostname: "APP_VIP" }
+      - { ip: "{{ DB_VIP }}", hostname: "DB_VIP" }
+      - { ip: "{{ WEB }}", hostname: "WEB" }
+      - { ip: "{{ first_APP }}", hostname: "1st_APP" }
+      - { ip: "{{ second_APP }}", hostname: "2nd_APP" }
+      - { ip: "{{ first_DB }}", hostname: "1st_DB" }
+      - { ip: "{{ second_DB }}", hostname: "2nd_DB" }
+  tasks:
+  - name: Set global facts
+    set_fact:
+      APP_VIP: "{{ APP_VIP }}"
+      DB_VIP: "{{ DB_VIP }}"
+      WEB: "{{ WEB }}"
+      "first_APP": "{{ first_APP }}"
+      "second_APP": "{{ second_APP }}"
+      "first_DB": "{{ first_DB }}"
+      "second_DB": "{{ second_DB }}"
+#  - name: displaying entered IP addresses
+#    debug:
+#      msg: 
+#        - "APP_VIP: {{ APP_VIP }}"
+#        - "DB_VIP: {{ DB_VIP }}"
+#        - "WEB: {{ WEB }}"
+#        - "first_APP: {{ vars['first_APP'] }}"
+#        - "second_APP: {{ vars['second_APP'] }}"
+#        - "first_DB: {{ vars['first_DB'] }}"
+#        - "second_DB: {{ vars['second_DB'] }}"
+#    - name: confirming if values are correct
+#      pause:
+#        prompt: "Are the entered values correct? Press Enter to continue or Ctrl+C to abort."
+# modifying selinux to permissive 
+  - name: modifying SELinux configuration
+    tags: selinux
+    lineinfile:
+      path: /etc/selinux/config
+      regexp: '^SELINUX='
+      line: 'SELINUX=permissive'
+# adding host IP from host_entries to /etc/hosts file using a template just in case of some bullsh
+  - name: updating /etc/hosts file
+    template:
+      src: hosts_template.j2
+      dest: /etc/hosts
+# preparing for installs
+  - name: importing Zabbix repository
+    command: rpm -Uvh https://repo.zabbix.com/zabbix/6.4/rhel/8/x86_64/zabbix-release-6.4-1.el8.noarch.rpm
+    ignore_errors: yes
+  - name: updating all packages
+    tags: upgrade
+    dnf:
+      name: '*'
+      state: latest
+  - name: cleaning DNF cache
+    command: dnf clean all
+# installing and configuring zabbix agents 
+  - name: installing and configuring zabbix-agent
+    dnf:
+      name: zabbix-agent
+      state: latest
+  - name: editing 'Server=' in zabbix_agentd.conf
+    lineinfile:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: '^Server='
+      line: 'Server={{ APP_VIP }}'
+  - name: editing 'ServerActive=' in zabbix_agentd.conf
+    lineinfile:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: '^ServerActive='
+      line: 'ServerActive={{ APP_VIP }}'
+  - name: editing 'Server=' in zabbix_agentd.conf
+    lineinfile:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: '^ListenIP='
+      line: 'ListenIP={{ ansible_default_ipv4.address }}'
+  - name: editing DenyKey to AllowKey in zabbix_agentd.conf
+    lineinfile:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: '^#DenyKey=system.run[*]'
+      line: 'AllowKey=system.run[*]'
+  - name: starting zabbix agent
+    ansible.builtin.service:
+      name: zabbix-agent
+      enabled: true
+      state: started
+# preparing for Percona
+  - name: installing Percona MySQL repository
+    shell: dnf install https://repo.percona.com/yum/percona-release-latest.noarch.rpm -y
+    ignore_errors: yes
+  - name: disabling the default MySQL module
+    shell: dnf module disable mysql -y
+  - name: setting up the Percona repository
+    shell: percona-release setup ps80 -y
+  - name: installing Percona client for MySQL
+    dnf:
+      name: percona-server-client
+      state: present
+# installing HA
+  - name: enabling YUM repositories
+    command: dnf config-manager --enable ol8_appstream ol8_baseos_latest ol8_addons
+  - name: installing necessary packages
+    command: dnf install -y pcs pacemaker resource-agents fence-agents-all
+  - name: '!!!!!Adding high-availability service to firewall (permanent)!!!!!'
+    command: firewall-cmd --permanent --add-service=high-availability
+    ignore_errors: yes
+  - name: '!!!!!ADDING PORTS 10050,10051 ON FIREWALL!!!!!'
+    command: firewall-cmd --permanent --add-port=10050/tcp --add-port=10051/tcp
+  - name: '!!!!!RELOADING FIREWALL!!!!!'
+    command: firewall-cmd --reload
+# not sure what this password_hash is supposed to do, ChatGPT made it, it worked so i left it.
+  - name: setting hacluster password
+    ansible.builtin.user:
+      name: hacluster
+      password: "{{ '12345678' | password_hash('sha512') }}"
+      update_password: always
+  - name: Enable and start pcsd service
+    systemd:
+      name: pcsd.service
+      enabled: yes
+      state: started
+# editing zabbix_server.conf
+- name: configuring zabbix servers
+  hosts: app_servers
+  become: yes
+  gather_facts: yes
+  tasks:
+  - name: installing Zabbix server packages
+    command: dnf install -y zabbix-server-mysql zabbix-sql-scripts zabbix-selinux-policy
+  - name: editing SourceIP in zabbix_server.conf
+    lineinfile:
+      path: /etc/zabbix/zabbix_server.conf
+      regexp: '^SourceIP='
+      line: 'SourceIP={{ APP_VIP }}'
+  - name: editing ListenIP in zabbix_server.conf
+    lineinfile:
+      path: /etc/zabbix/zabbix_server.conf
+      regexp: '^ListenIP='
+      line: 'ListenIP={{ APP_VIP }}'
+  - name: editing DBHost in zabbix_server.conf
+    lineinfile:
+      path: /etc/zabbix/zabbix_server.conf
+      regexp: '^DBHost='
+      line: 'DBHost={{ DB_VIP }}'
+  - name: editing DBName in zabbix_server.conf
+    lineinfile:
+      path: /etc/zabbix/zabbix_server.conf
+      regexp: '^DBName='
+      line: 'DBName=zabbix'
+  - name: editing DBPassword zabbix_server.conf
+    lineinfile:
+      path: /etc/zabbix/zabbix_server.conf
+      regexp: '^DBPassword='
+      line: 'DBPassword=Password1+'
+  - name: starting zabbix server
+    ansible.builtin.service:
+      name: zabbix-server
+      enabled: true
+      state: started
+# creating an app_cluster
+- name: setting up a zabbix app cluster (on a firstAPP node)
+  gather_facts: yes
+  hosts: "{{ first_APP }}"
+  become: yes
+  tasks:
+  - name: authenticating APP cluster nodes
+    expect:
+      command: pcs host auth 1st_APP 2nd_APP -u hacluster
+      responses:
+        "Password: ": 12345678
+      timeout: 60
+  - name: setting up the cluster
+    command: pcs cluster setup app-cluster 1st_APP addr= "{{ first_APP }}" 2nd_APP addr= "{{ second_APP }}" --force
+  - name: waiting for the cluster to stabilize
+    pause:
+      seconds: 10
+  - name: stopping the cluster
+    command: pcs cluster stop --all
+  - name: starting the cluster
+    command: pcs cluster start --all
+  - name: disabling stonith-enabled property
+    command: pcs property set stonith-enabled=false
+  - name: creating a virtual IP resource
+    command: pcs resource create virtual_ip ocf:heartbeat:IPaddr2 ip= "{{ APP_VIP }}" op monitor interval=5s --group app_cluster
+    ignore_errors: yes
+  - name: creating a ZabbixAppServer resource
+    command: pcs resource create ZabbixAppServer systemd:zabbix-server op monitor interval=10s --group app_cluster
+  - name: updating resource stickiness to =100
+    command: pcs resource defaults update resource-stickiness=100
+  - name: updating multiple-active=stop_start
+    command: pcs resource defaults update multiple-active=stop_start
+  - name: adding a location constraint
+    command: pcs constraint location virtual_ip prefers 1st_APP=INFINITY --force
+  - name: add a location constraint
+    command: pcs constraint location ZabbixAppServer prefers 1st_APP=INFINITY --force
+  - name: setting a start timeout operation. -- Ignore if already defined --
+    command: pcs resource op add ZabbixAppServer start interval=0s timeout=60s
+    ignore_errors: yes
+  - name: setting a stop timeout operation. -- Ignore if already defined --
+    command: pcs resource op add ZabbixAppServer stop interval=0s timeout=120s
+    ignore_errors: yes
+  - name: pcs enable all
+    command: pcs cluster enable --all
+# installing frontend 
+- name: setting up a zabbix-web-service
+  hosts: web_servers
+  become: yes
+  gather_facts: no
+  tasks:
+  - name: Switch to PHP 7.4 module
+    command: dnf module reset php -y
+    ignore_errors: yes
+  - name: Install PHP 7.4
+    command: dnf module install php:7.4 -y
+    ignore_errors: yes
+  - name: install zabbix-web-service packages
+    command: dnf install -y zabbix-web-service zabbix-web-mysql zabbix-apache-conf httpd
+  handlers:
+  - name: Reload Apache
+    become: yes
+    ansible.builtin.service:
+      name: httpd
+      state: restarted
+  - name: start zabbix-web-service
+    ansible.builtin.service:
+      name: zabbix-web-service
+      state: started
+  - name: '!!!!!ADDING PORTS 80,8080 ON FIREWALL!!!!!'
+    command: firewall-cmd --permanent --add-port=80/tcp --add-port=8080/tcp
+  - name: '!!!!!RELOADING FIREWALL!!!!!'
+    command: firewall-cmd --reload
+# installing DB
+- name: installing percona-server-server 
+  hosts: db_servers
+  become: yes
+  gather_facts: no
+  tasks:
+  - name: Install Percona Server for MySQL
+    dnf:
+      name: percona-server-server
+      state: present
+  - name: '!!!!!ADDING PORTS 3306 ON FIREWALL!!!!!'
+    command: firewall-cmd --permanent --add-port=3306/tcp
+  - name: '!!!!!RELOADING FIREWALL!!!!!'
+    command: firewall-cmd --reload
+# creating a db_cluster
+- name: setting up a database cluster (on a 1st_DB node)
+  gather_facts: yes
+  hosts: "{{ first_DB }}"
+  become: yes
+  tasks:
+  - name: authenticate DB cluster nodes
+    expect:
+      command: pcs host auth 1st_DB 2nd_DB -u hacluster
+      responses:
+        "Password: ": 12345678
+  - name: setting up the cluster
+    command: pcs cluster setup db_cluster 1st_DB addr= "{{ first_DB }}" 2nd_DB addr= "{{ second_DB }}" --force
+  - name: waiting for the cluster to stabilize
+    pause:
+      seconds: 10
+  - name: stopping the cluster
+    command: pcs cluster stop --all
+  - name: starting the cluster
+    command: pcs cluster start --all
+  - name: setting stonith-enabled to false
+    command: pcs property set stonith-enabled=false --force
+  - name: creating resource for DB VIP
+    command: pcs resource create virtual_ip ocf:heartbeat:IPaddr2 ip= "{{ DB_VIP }}" op monitor interval=5s --group db_cluster
+    ignore_errors: yes
+  - name: updating resource stickiness to =100
+    command: pcs resource defaults update resource-stickiness=100
+  - name: updating multiple-active=stop_start
+    command: pcs resource defaults update multiple-active=stop_start
+  - name: pcs enable all
+    command: pcs cluster enable --all

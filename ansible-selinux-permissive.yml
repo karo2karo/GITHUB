@@ -1,0 +1,12 @@
+---
+
+- name: Set SELinux to Permissive
+  hosts: your_target_hosts
+  become: yes
+  tasks:
+  - name: Modify SELinux Configuration
+    lineinfile:
+      path: /etc/selinux/config
+      regexp: '^SELINUX='
+      line: 'SELINUX=permissive'
+
