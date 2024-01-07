@@ -38,7 +38,7 @@ def main():
 def connect_to_zabbix():
     global zapi
     zapi = ZabbixAPI("https://zabbix.telia.lt/")
-    zapi.login(user="zut970", password="2023Zuikis2023+++")
+    zapi.login(user="", password="")
     print("Connected to Zabbix API Version %s" % zapi.api_version())
 
 def write_csv_file():
