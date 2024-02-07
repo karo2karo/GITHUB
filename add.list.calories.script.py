@@ -95,16 +95,32 @@ def show_average_calories(collection):
     average_calories = calculate_average_calories(current_year, current_month, collection)
     print("{}Average Calories for the Current Month: {}{:.2f}{}".format(red_text, green_text, average_calories, reset_color))
     
+# Function to display the menu
+def display_menu():
+    yellow_text = Fore.YELLOW + Style.BRIGHT
+    reset_color = Style.RESET_ALL
+
+    print(f"{yellow_text}======= Calorie Tracker Menu ======={reset_color}")
+    print("1. Add daily calories to the database")
+    print("2. List calories for the current month")
+    print("3. Show the average of this month's calories")
+    print("4. Exit")
+
 # Main function to start the program
 def start():
     # Use the get_mongo_connection function to get the MongoDB connection
     client, db, collection = get_mongo_connection()
 
+    yellow_text = Fore.YELLOW + Style.BRIGHT
+    reset_color = Style.RESET_ALL
+    
     while True:
+        display_menu()
+
         try:
-            choice = int(input("Enter 1 to add calories to database:\nEnter 2 to list the calories of the current month:\nEnter 3 to show the average of this month's calories:\nEnter 4 to exit:\n"))
+            choice = int(input(f"{yellow_text}Enter your choice (1-4):{reset_color} "))
         except ValueError:
-            print("Input is invalid...")
+            print("Invalid input. Please enter a number.")
             continue
 
         if choice == 1:
@@ -124,6 +140,5 @@ def start():
             client.close()
             sys.exit()
 
-# Run the program
 if __name__ == "__main__":
     start()
