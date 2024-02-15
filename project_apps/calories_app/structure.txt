@@ -1,0 +1,16 @@
+/calories-app
+    /__init__.py
+    /models.py
+    /database.py
+    /utils.py
+    /auth_routes.py
+    /calorie_routes.py
+    /user_calorie_routes.py
+    /calorie_item_routes.py
+    /static
+        /js
+            dark-mode.js
+        /logo
+    /templates
+        /... (HTML templates)
+/app.py

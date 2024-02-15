@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous" />
+    <style>
+        .logo-container img {
+            width: 100%;
+            height: auto;
+        }
+        .btn-secondary {
+        background-color: #29b357;
+        border-color: #17a2b8;
+        color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #248a4d;
+            border-color: #148b48;
+        }
+
+        .btn-info {
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+        color: white;
+        }
+
+        /* Dark mode styles */
+        .dark-mode {
+            background-color: #121212;
+            color: #ffffff;
+        }
+
+        .dark-mode a {
+            color: #9f9f9f;
+        }
+
+            /* Dark mode button styles */
+        .dark-mode .btn {
+            color: #ffffff;  /* White text for better readability */
+            border-color: rgba(255, 255, 255, 0.5);  /* Lighter border for visibility */
+        }
+
+        .dark-mode .btn:hover {
+            color: #000000;  /* Dark text on hover */
+            background-color: rgba(255, 255, 255, 0.8);  /* Lighter background on hover */
+            border-color: #ffffff;
+        }
+
+        /* Style for the dark mode toggle button */
+        .dark-mode .btn-light {
+            background-color: rgba(255, 255, 255, 0.1); /* Slightly visible background */
+            color: #ffffff; /* White icon */
+        }
+
+        .dark-mode .btn-light:hover {
+            background-color: rgba(255, 255, 255, 0.2); /* More visible on hover */
+        }
+    </style>
+
+    <title>{% block title %}Calorie Tracker{% endblock %}</title>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbar">
+            <div class="navbar-nav">
+                <a class="nav-item nav-link" href="{{ url_for('index') }}">Home</a>
+                {% if current_user.is_authenticated %}
+                    <a class="nav-item nav-link" href="{{ url_for('auth_bp.logout') }}">Logout</a>
+                {% else %}
+                    <a class="nav-item nav-link" href="{{ url_for('auth_bp.signup') }}">Sign Up</a>
+                    <a class="nav-item nav-link" href="{{ url_for('auth_bp.login') }}">Login</a>
+                {% endif %}
+            </div>
+            <div class="ml-auto">
+                {% if current_user.is_authenticated %}
+                    <span class="navbar-text text-light">
+                        Logged in as <strong>{{ current_user.username }}</strong>
+                    </span>
+                {% endif %}
+                <button onclick="toggleDarkMode()" id="dark-mode-toggle" class="btn btn-sm btn-light ml-2">
+                    <i id="toggle-icon" class="fas fa-sun"></i>
+                </button>
+            </div>
+        </nav>
+
+    <div class="container">
+        <h1>Welcome to Calorie Tracker</h1>
+        <p>This is your personal calorie tracking dashboard.</p>
+        <!-- <div class="logo-container">
+            <img id="logo-image" src="{{ url_for('static', filename='logo-light.png') }}" alt="logo">
+        </div> -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% if category == 'error' %}
+                        <div class="alert alert-danger alert-dismissable fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success alert-dismissable fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}
+        {% endblock %}
+    
+        {% if request.endpoint == 'index' and current_user.is_authenticated %}
+        <div class="mt-3">
+            {% if request.endpoint == 'index' and current_user.is_authenticated %}
+                <div class="d-flex flex-column">
+                    <a href="{{ url_for('user_calorie_bp.add_calories') }}" class="btn btn-primary btn-lg mb-2">
+                        <i class="fa fa-plus-circle mr-2"></i> Add Calories
+                    </a>
+                    <a href="{{ url_for('calorie_item_bp.manage_calorie_items') }}" class="btn btn-info btn-lg mb-2">
+                        <i class="fa fa-plus-circle mr-2"></i> Add Calories by Items
+                    </a>
+                    <a href="{{ url_for('calorie_item_bp.add_calorie_item') }}" class="btn btn-secondary btn-lg mb-2">
+                        <i class="fa fa-plus-circle mr-2"></i> Add Calorie Items
+                    </a>
+                    <a href="{{ url_for('user_calorie_bp.list_calories', option='current_month') }}" class="btn btn-info btn-lg mb-2">
+                        <i class="fa fa-list mr-2"></i> Show Calorie Data
+                    </a>
+                    <a href="{{ url_for('user_calorie_bp.delete_user') }}" class="btn btn-danger btn-lg">
+                        <i class="fa fa-trash mr-2"></i> Delete User
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+        {% endif %}
+    </div>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='js/dark-mode.js') }}"></script>
+
+    {% block javascript %}
+    {% endblock %}
+</body>
+</html>

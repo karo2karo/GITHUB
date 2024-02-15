@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous" />
+    <style>
+        /* Existing styles... */
+    
+        body {
+            background-color: #ffffff;
+            color: #343a40;
+            margin: 0;
+        }
+    
+        .container {
+            background-color: #ffffff; /* Default light background */
+            padding: 20px;
+            margin-top: 20px;
+        }
+    
+        .table thead th {
+            vertical-align: bottom;
+            border-bottom: 2px solid #dee2e6;
+        }
+    
+        .dark-mode {
+            background-color: #121212;
+            color: #ffffff;
+        }
+    
+        .dark-mode .container {
+            background-color: #121212; /* Dark background for container */
+        }
+    
+        .dark-mode table {
+            border-color: #ffffff;
+        }
+    
+        .dark-mode table th,
+        .dark-mode table td {
+            border-color: #ffffff;
+            color: #ffffff;
+        }
+    
+        /* Rest of your dark mode styles... */
+    </style>
+    <title>{% block title %}Add Calorie Items{% endblock %}</title>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbar">
+            <div class="navbar-nav">
+                <a class="nav-item nav-link" href="{{ url_for('index') }}">Home</a>
+                {% if current_user.is_authenticated %}
+                <a class="nav-item nav-link" href="{{ url_for('auth_bp.logout') }}">Logout</a>
+            {% endif %}
+            </div>
+            <div class="ml-auto">
+                {% if current_user.is_authenticated %}
+                    <span class="navbar-text text-light">
+                        Logged in as <strong>{{ current_user.username }}</strong>
+                    </span>
+                {% endif %}
+                <button onclick="toggleDarkMode()" class="btn btn-sm btn-light ml-2">
+                    <i id="toggle-icon" class="fas fa-sun"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2>Add a New Calorie Item</h2>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% if category == 'error' %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% elif category == 'success' %}
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form method="post" action="{{ url_for('calorie_item_bp.add_calorie_item') }}">
+            <div class="form-group">
+                <label for="food_item">Enter the name of a food item:</label>
+                <input type="text" class="form-control" id="food_item" name="food_item" required>
+            </div>
+            <div class="form-group">
+                <label for="calorie_amount">Enter the calorie amount per 100 grams:</label>
+                <input type="text" class="form-control" id="calorie_amount" name="calorie_amount" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+        <hr>
+        <hr>
+        <hr>
+        <h3>Existing Calorie Items</h3>
+        <div class="text-right mt-2 mb-2">
+            <a href="{{ url_for('calorie_item_bp.download_calorie_items_csv') }}" class="btn btn-primary">Download CSV</a>
+        </div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Food Item</th>
+                    <th>Calories per 100g</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in user_calorie_items %}
+                    <tr>
+                        <td>{{ item.food_item }}</td>
+                        <td>{{ item.calorie_amount }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('calorie_item_bp.delete_calorie_item', item_id=item._id) }}" onsubmit="return confirm('Are you sure you want to delete this item?');">
+                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if total_pages is defined %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                {% for p in range(1, total_pages + 1) %}
+                    <li class="page-item {% if p == current_page %} active {% endif %}">
+                        <!-- Updated URL for pagination -->
+                        <a class="page-link" href="{{ url_for('calorie_item_bp.add_calorie_item', page=p) }}">{{ p }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </nav>
+    {% endif %}
+
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='js/dark-mode.js') }}"></script>
+</body>
+</html>
