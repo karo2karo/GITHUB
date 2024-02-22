@@ -11,8 +11,14 @@
             width: 100%;
             height: auto;
         }
+        .custom-btn {
+        background-color: #7e3acc;
+        border-color: #17a2b8;
+        color: white;
+        }
+
         .btn-secondary {
-        background-color: #29b357;
+        background-color: #09ac3f;
         border-color: #17a2b8;
         color: white;
         }
@@ -73,6 +79,7 @@
                 <a class="nav-item nav-link" href="{{ url_for('index') }}">Home</a>
                 {% if current_user.is_authenticated %}
                     <a class="nav-item nav-link" href="{{ url_for('auth_bp.logout') }}">Logout</a>
+                    <!-- <a class="nav-item nav-link" href="{{ url_for('auth_bp.user_settings') }}">settings</a> -->
                 {% else %}
                     <a class="nav-item nav-link" href="{{ url_for('auth_bp.signup') }}">Sign Up</a>
                     <a class="nav-item nav-link" href="{{ url_for('auth_bp.login') }}">Login</a>
@@ -128,19 +135,21 @@
                     <a href="{{ url_for('user_calorie_bp.add_calories') }}" class="btn btn-primary btn-lg mb-2">
                         <i class="fa fa-plus-circle mr-2"></i> Add Calories
                     </a>
-                    <a href="{{ url_for('calorie_item_bp.manage_calorie_items') }}" class="btn btn-info btn-lg mb-2">
+                    <a href="{{ url_for('calorie_item_bp.manage_calorie_items') }}" class="btn btn-primary btn-lg mb-2">
                         <i class="fa fa-plus-circle mr-2"></i> Add Calories by Items
                     </a>
                     <a href="{{ url_for('calorie_item_bp.add_calorie_item') }}" class="btn btn-secondary btn-lg mb-2">
                         <i class="fa fa-plus-circle mr-2"></i> Add Calorie Items
                     </a>
-                    <a href="{{ url_for('user_calorie_bp.list_calories', option='current_month') }}" class="btn btn-info btn-lg mb-2">
+                    <a href="{{ url_for('user_calorie_bp.list_calories', option='current_month') }}" class="btn custom-btn btn-lg mb-2">
                         <i class="fa fa-list mr-2"></i> Show Calorie Data
                     </a>
-                    <a href="{{ url_for('user_calorie_bp.delete_user') }}" class="btn btn-danger btn-lg">
+                    <!-- <a href="{{ url_for('user_calorie_bp.delete_user') }}" class="btn btn-danger btn-lg">
                         <i class="fa fa-trash mr-2"></i> Delete User
+                    </a> -->
+                    <a href="{{ url_for('auth_bp.user_settings') }}" class="btn btn-danger btn-lg">
+                        <i class="fa fa-trash mr-2"></i> User Settings
                     </a>
-                </div>
             {% endif %}
         </div>
     </div>

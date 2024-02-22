@@ -9,7 +9,7 @@ from .calorie_item_routes import calorie_item_bp
 from .user_calorie_routes import user_calorie_bp
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
+app.secret_key = 'plius+-minus4816237mousymouse####'
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'auth_bp.login' 

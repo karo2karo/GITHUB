@@ -232,7 +232,6 @@ def delete_user():
 
     return render_template('delete_user.html')
 
-
 @user_calorie_bp.route('/confirm_delete_calories/<date>', methods=['POST'])
 @login_required
 def confirm_delete_calories(date):

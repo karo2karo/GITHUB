@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous" />
+    <style>
+        /* Dark mode styles */
+        
+        .dark-mode {
+            background-color: #121212;
+            color: #ffffff;
+        }
+
+        .dark-mode a {
+            color: #9f9f9f;
+        }
+
+        /* Add more dark mode styles as needed */
+    </style>
+        <title>{% block title %}User Settings{% endblock %}</title>
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbar">
+                <div class="navbar-nav">
+                    <a class="nav-item nav-link" href="{{ url_for('index') }}">Home</a>
+                    {% if current_user.is_authenticated %}
+                        <a class="nav-item nav-link" href="{{ url_for('auth_bp.logout') }}">Logout</a>
+                    {% endif %}
+                </div>
+                <div class="ml-auto">
+                    {% if current_user.is_authenticated %}
+                        <span class="navbar-text text-light">
+                            Logged in as <strong>{{ current_user.username }}</strong>
+                        </span>
+                    {% endif %}
+                    <button onclick="toggleDarkMode()" class="btn btn-sm btn-light ml-2">
+                        <i id="toggle-icon" class="fas fa-sun"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+        <div class="container">
+            <h2>User Settings</h2>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        {% if category == 'error' %}
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        {% elif category == 'success' %}
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        
+                <!-- Tabs for Changing Email and Password -->
+                <ul class="nav nav-tabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#changeEmail" data-toggle="tab">Change Email</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#changePassword" data-toggle="tab">Change Password</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#deleteAccount" data-toggle="tab">Delete Account</a>
+                    </li>
+                </ul>
+        
+                <div class="tab-content">
+                    <!-- Change Email Tab -->
+                    <div class="tab-pane fade show active" id="changeEmail">
+                        <form method="post" action="{{ url_for('auth_bp.user_settings') }}">
+                            <input type="hidden" name="action" value="change_email">
+                            
+                            <!-- Current Password Field for Email Change Verification -->
+                            <div class="form-group">
+                                <label for="new_email">New Email:</label>
+                                <input type="email" class="form-control" id="new_email" name="new_email" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="current_password_email">Current Password:</label>
+                                <input type="password" class="form-control" id="current_password_email" name="current_password_email" required>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Change Email</button>
+                        </form>
+                    </div>
+        
+                    <!-- Change Password Tab -->
+                    <div class="tab-pane fade" id="changePassword">
+                        <form method="post" action="{{ url_for('auth_bp.user_settings') }}">
+                            <input type="hidden" name="action" value="change_password">
+                            <div class="form-group">
+                                <label for="current_password">Current Password:</label>
+                                <input type="password" class="form-control" id="current_password" name="current_password" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="new_password">New Password:</label>
+                                <input type="password" class="form-control" id="new_password" name="new_password" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="confirm_new_password">Confirm New Password:</label>
+                                <input type="password" class="form-control" id="confirm_new_password" name="confirm_new_password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Change Password</button>
+                        </form>
+                    </div>
+                    <!-- Delete Account Tab -->
+                    <div class="tab-pane fade" id="deleteAccount">
+                        <form method="post" action="{{ url_for('auth_bp.user_settings') }}">
+                            <input type="hidden" name="action" value="delete_account">
+                            <div class="form-group">
+                                <label for="delete_password">Password:</label>
+                                <input type="password" class="form-control" id="delete_password" name="delete_password" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="confirm_delete_password">Confirm Password:</label>
+                                <input type="password" class="form-control" id="confirm_delete_password" name="confirm_delete_password" required>
+                            </div>
+                            <button type="submit" class="btn btn-danger">Delete Account</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+    </div>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='js/dark-mode.js') }}"></script>
+</body>
+</html>
