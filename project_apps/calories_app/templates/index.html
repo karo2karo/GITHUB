@@ -11,25 +11,31 @@
             width: 100%;
             height: auto;
         }
-        .custom-btn {
-        background-color: #7e3acc;
+        .custom-btn-primary {
+        background-color: #759194;
         border-color: #17a2b8;
         color: white;
         }
 
-        .btn-secondary {
-        background-color: #09ac3f;
+        .custom-btn-secondary {
+        background-color: #e1a102;
         border-color: #17a2b8;
         color: white;
         }
 
-        .btn-secondary:hover {
-            background-color: #248a4d;
-            border-color: #148b48;
+        .custom-btn-third {
+        background-color: #cea48c;
+        border-color: #17a2b8;
+        color: white;
+        }
+        .custom-btn-fourth {
+        background-color: #bcba90;
+        border-color: #17a2b8;
+        color: white;
         }
 
-        .btn-info {
-        background-color: #17a2b8;
+        .custom-btn-fifth {
+        background-color: #de634d;
         border-color: #17a2b8;
         color: white;
         }
@@ -132,24 +138,22 @@
         <div class="mt-3">
             {% if request.endpoint == 'index' and current_user.is_authenticated %}
                 <div class="d-flex flex-column">
-                    <a href="{{ url_for('user_calorie_bp.add_calories') }}" class="btn btn-primary btn-lg mb-2">
+                    <a href="{{ url_for('user_calorie_bp.add_calories') }}" class="btn custom-btn-primary square-btn btn-lg mb-2">
                         <i class="fa fa-plus-circle mr-2"></i> Add Calories
                     </a>
-                    <a href="{{ url_for('calorie_item_bp.manage_calorie_items') }}" class="btn btn-primary btn-lg mb-2">
+                    <a href="{{ url_for('calorie_item_bp.manage_calorie_items') }}" class="btn custom-btn-secondary square-btn btn-lg mb-2">
                         <i class="fa fa-plus-circle mr-2"></i> Add Calories by Items
                     </a>
-                    <a href="{{ url_for('calorie_item_bp.add_calorie_item') }}" class="btn btn-secondary btn-lg mb-2">
+                    <a href="{{ url_for('calorie_item_bp.add_calorie_item') }}" class="btn custom-btn-third square-btn btn-lg mb-2">
                         <i class="fa fa-plus-circle mr-2"></i> Add Calorie Items
                     </a>
-                    <a href="{{ url_for('user_calorie_bp.list_calories', option='current_month') }}" class="btn custom-btn btn-lg mb-2">
+                    <a href="{{ url_for('user_calorie_bp.list_calories', option='current_month') }}" class="btn custom-btn-fourth square-btn btn-lg mb-2">
                         <i class="fa fa-list mr-2"></i> Show Calorie Data
                     </a>
-                    <!-- <a href="{{ url_for('user_calorie_bp.delete_user') }}" class="btn btn-danger btn-lg">
-                        <i class="fa fa-trash mr-2"></i> Delete User
-                    </a> -->
-                    <a href="{{ url_for('auth_bp.user_settings') }}" class="btn btn-danger btn-lg">
+                    <a href="{{ url_for('auth_bp.user_settings') }}" class="btn custom-btn-fifth square-btn btn-lg mb-2">
                         <i class="fa fa-trash mr-2"></i> User Settings
                     </a>
+                </div>
             {% endif %}
         </div>
     </div>
