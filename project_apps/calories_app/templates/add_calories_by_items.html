@@ -30,6 +30,7 @@
             <div class="navbar-nav">
                 <a class="nav-item nav-link" href="{{ url_for('index') }}">Home</a>
                 <a class="nav-item nav-link" href="{{ url_for('user_calorie_bp.list_calories') }}">Calorie Lists</a>
+                <a class="nav-item nav-link" href="{{ url_for('calorie_item_bp.add_calorie_item') }}">Calorie Items</a>
                 {% if current_user.is_authenticated %}
                     <a class="nav-item nav-link" href="{{ url_for('auth_bp.logout') }}">Logout</a>
                 {% endif %}

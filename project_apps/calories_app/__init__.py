@@ -7,6 +7,8 @@ from .auth_routes import auth_bp
 from .calorie_routes import calorie_bp
 from .calorie_item_routes import calorie_item_bp
 from .user_calorie_routes import user_calorie_bp
+from .api import api_bp
+
 
 app = Flask(__name__)
 app.secret_key = 'plius+-minus4816237mousymouse####'
@@ -38,3 +40,4 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(calorie_bp)
 app.register_blueprint(calorie_item_bp)
 app.register_blueprint(user_calorie_bp)
+app.register_blueprint(api_bp, url_prefix='/api')

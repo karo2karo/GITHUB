@@ -144,3 +144,19 @@ def delete_calorie_item(item_id):
         # Log the error here if necessary
         flash(f'An error occurred while deleting the item: {str(e)}', 'error')
     return redirect(url_for('calorie_item_bp.add_calorie_item'))
+
+@calorie_item_bp.route('/add_calorie_item_from_api', methods=['POST'])
+@login_required
+def add_calorie_item_from_api():
+    food_item = request.form['food_item']
+    calorie_amount = request.form['calorie_amount']
+
+    # Fetch or create the collection for the current user
+    calorie_items_collection = get_user_calorie_items_collection(current_user.id)
+
+    # Add the new item
+    new_calorie_item = {'food_item': food_item, 'calorie_amount': calorie_amount}
+    calorie_items_collection.insert_one(new_calorie_item)
+    flash(f"Added {food_item} to your calorie items.", 'success')
+
+    return redirect(url_for('calorie_item_bp.add_calorie_item'))

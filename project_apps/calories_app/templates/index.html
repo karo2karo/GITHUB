@@ -12,7 +12,7 @@
             height: auto;
         }
         .custom-btn-primary {
-        background-color: #759194;
+        background-color: #9dac7c;
         border-color: #17a2b8;
         color: white;
         }
@@ -24,17 +24,23 @@
         }
 
         .custom-btn-third {
-        background-color: #cea48c;
+        background-color: #8f7243;
         border-color: #17a2b8;
         color: white;
         }
         .custom-btn-fourth {
-        background-color: #bcba90;
+        background-color: #759194;
         border-color: #17a2b8;
         color: white;
         }
 
         .custom-btn-fifth {
+        background-color: #3c5e55;
+        border-color: #17a2b8;
+        color: white;
+        }
+        
+        .custom-btn-sixth {
         background-color: #de634d;
         border-color: #17a2b8;
         color: white;
@@ -150,7 +156,10 @@
                     <a href="{{ url_for('user_calorie_bp.list_calories', option='current_month') }}" class="btn custom-btn-fourth square-btn btn-lg mb-2">
                         <i class="fa fa-list mr-2"></i> Show Calorie Data
                     </a>
-                    <a href="{{ url_for('auth_bp.user_settings') }}" class="btn custom-btn-fifth square-btn btn-lg mb-2">
+                    <a href="{{ url_for('api.search') }}" class="btn custom-btn-fifth square-btn btn-lg mb-2">
+                        <i class="fa fa-list mr-2"></i> FoodData Central API
+                    </a>
+                    <a href="{{ url_for('auth_bp.user_settings') }}" class="btn custom-btn-sixth square-btn btn-lg mb-2">
                         <i class="fa fa-trash mr-2"></i> User Settings
                     </a>
                 </div>
