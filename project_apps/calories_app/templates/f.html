@@ -3,9 +3,9 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous" />
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.2.1/css/bootstrap.min.css" integrity="sha384-iYQeCzEYFbKjA/T2dhrFCzIy4sqgyWI5+5Qfe3p9bZ5zVUd7Fg5VhjT5K3Rfl3L6" crossorigin="anonymous" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    
     <style>
         body {
             background-color: #ffffff;
@@ -51,7 +51,7 @@
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbar">
@@ -60,9 +60,9 @@
                 {% if current_user.is_authenticated %}
                 <a class="nav-item nav-link" href="{{ url_for('user_calorie_bp.list_calories') }}">Calorie Data</a>
                 <a class="nav-item nav-link" href="{{ url_for('auth_bp.logout') }}">Logout</a>
-            {% endif %}
+                {% endif %}
             </div>
-            <div class="ml-auto">
+            <div class="ms-auto">
                 {% if current_user.is_authenticated %}
                     <span class="navbar-text text-light">
                         Logged in as <strong>{{ current_user.username }}</strong>
@@ -74,17 +74,6 @@
             </div>
         </div>
     </nav>
-
-    <!-- Flash messages display block -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}" role="alert">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
 
     <div class="container">
         <h2>Calorie Data</h2>
@@ -248,50 +237,48 @@
                     <hr>
                 {% endif %}
             </div>
-    </div>
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-    <script src="{{ url_for('static', filename='js/dark-mode.js') }}"></script>
-    <!-- <script>
-        function toggleDarkMode() {
-            var body = document.body;
-            body.classList.toggle('dark-mode');
-    
-            var icon = document.getElementById('toggle-icon');
-            if (body.classList.contains('dark-mode')) {
-                icon.classList.remove('fas', 'fa-sun');
-                icon.classList.add('fas', 'fa-moon');
-            } else {
-                icon.classList.remove('fas', 'fa-moon');
-                icon.classList.add('fas', 'fa-sun');
-            }
-        }
+        </div>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.2.1/js/bootstrap.bundle.min.js" integrity="sha384-u1OknCvxWvY5kfmNBILK2hRnQC3Pr17aF8a6KUaSZ9IG0kMVKLlTfFJ2MRnyJz6s" crossorigin="anonymous"></script>
+        <script>
+            function toggleDarkMode() {
+                var body = document.body;
+                body.classList.toggle('dark-mode');
         
-        // Optional: Save Dark Mode Preference
-        document.addEventListener('DOMContentLoaded', (event) => {
-            if (localStorage.getItem('darkMode') === 'true') {
-                document.body.classList.add('dark-mode');
                 var icon = document.getElementById('toggle-icon');
-                icon.classList.remove('fas', 'fa-sun');
-                icon.classList.add('fas', 'fa-moon');
+                if (body.classList.contains('dark-mode')) {
+                    icon.classList.remove('fas', 'fa-sun');
+                    icon.classList.add('fas', 'fa-moon');
+                } else {
+                    icon.classList.remove('fas', 'fa-moon');
+                    icon.classList.add('fas', 'fa-sun');
+                }
             }
-        });
-    
-        function toggleDarkMode() {
-            var body = document.body;
-            body.classList.toggle('dark-mode');
-            localStorage.setItem('darkMode', body.classList.contains('dark-mode'));
-    
-            var icon = document.getElementById('toggle-icon');
-            if (body.classList.contains('dark-mode')) {
-                icon.classList.remove('fas', 'fa-sun');
-                icon.classList.add('fas', 'fa-moon');
-            } else {
-                icon.classList.remove('fas', 'fa-moon');
-                icon.classList.add('fas', 'fa-sun');
+            
+            // Optional: Save Dark Mode Preference
+            document.addEventListener('DOMContentLoaded', (event) => {
+                if (localStorage.getItem('darkMode') === 'true') {
+                    document.body.classList.add('dark-mode');
+                    var icon = document.getElementById('toggle-icon');
+                    icon.classList.remove('fas', 'fa-sun');
+                    icon.classList.add('fas', 'fa-moon');
+                }
+            });
+        
+            function toggleDarkMode() {
+                var body = document.body;
+                body.classList.toggle('dark-mode');
+                localStorage.setItem('darkMode', body.classList.contains('dark-mode'));
+        
+                var icon = document.getElementById('toggle-icon');
+                if (body.classList.contains('dark-mode')) {
+                    icon.classList.remove('fas', 'fa-sun');
+                    icon.classList.add('fas', 'fa-moon');
+                } else {
+                    icon.classList.remove('fas', 'fa-moon');
+                    icon.classList.add('fas', 'fa-sun');
+                }
             }
-        }
-    </script> -->
-</body>
-</html>
+        </script>
+    </body>
+    </html>

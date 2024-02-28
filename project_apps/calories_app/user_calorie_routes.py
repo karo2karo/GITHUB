@@ -77,10 +77,10 @@ def list_calories():
     _, _, _, _ = get_mongo_connection()
     option = request.args.get('option', 'current_month')
     page = request.args.get('page', 1, type=int)
-    per_page = 10  # Number of records per page
+    per_page = 15  # Number of records per page
 
     # Initialize variables
-    entries = None
+    entries = []
     start_date = None
     end_date = None
     average_data = None
@@ -89,29 +89,48 @@ def list_calories():
         if option == 'current_month':
             start_date = get_start_of_month(datetime.now().year, datetime.now().month)
             end_date = get_end_of_month(datetime.now().year, datetime.now().month)
-            entries = current_user.calories_collection.find(
+            entries = list(current_user.calories_collection.find(
                 {'date': {'$gte': start_date.strftime('%Y-%m-%d'), '$lte': end_date.strftime('%Y-%m-%d')}}
-            ).sort('date').skip((page - 1) * per_page).limit(per_page)
+            ).sort('date').skip((page - 1) * per_page).limit(per_page))
 
         elif option == 'all_data':
-            entries = current_user.calories_collection.find().sort('date').skip((page - 1) * per_page).limit(per_page)
+            entries = list(current_user.calories_collection.find().sort('date').skip((page - 1) * per_page).limit(per_page))
 
         elif option == 'averages':
-            start_of_month = get_start_of_month(datetime.now().year, datetime.now().month)
-            end_of_month = get_end_of_month(datetime.now().year, datetime.now().month)
-            average_calories_month = calculate_average_calories(start_of_month, end_of_month, current_user.calories_collection)
+            # Define the range of years for which you want to calculate averages
+            first_entry = current_user.calories_collection.find_one(sort=[('date', 1)])
+            start_year = datetime.strptime(first_entry['date'], '%Y-%m-%d').year if first_entry else datetime.now().year
+            end_year = datetime.now().year
+            month_names = ['January', 'February', 'March', 'April', 'May', 'June', 
+                        'July', 'August', 'September', 'October', 'November', 'December']
 
-            start_of_year = get_start_of_month(datetime.now().year, 1)
-            end_of_year = get_end_of_month(datetime.now().year, 12)
-            average_calories_year = calculate_average_calories(start_of_year, end_of_year, current_user.calories_collection)
+            # Dictionary to hold average calories and entry count for each month of each year
+            average_calories_by_month_year = {}
 
+            for year in range(end_year, start_year - 1, -1):
+                for month in range(1, 13):
+                    start_of_month = get_start_of_month(year, month)
+                    end_of_month = get_end_of_month(year, month)
+
+                    # Fetch all entries for the month
+                    monthly_entries = list(current_user.calories_collection.find({'date': {'$gte': start_of_month.strftime('%Y-%m-%d'), '$lte': end_of_month.strftime('%Y-%m-%d')}}))
+
+                    # Check if there are entries for the month
+                    if monthly_entries:
+                        average_calories = sum(entry['total_calories'] for entry in monthly_entries) / len(monthly_entries)
+                        month_name = month_names[month - 1]
+                        average_calories_by_month_year[f"{year} {month_name}"] = {
+                            'average_calories': average_calories,
+                            'entry_count': len(monthly_entries)
+                        }
+
+            # Calculate average calories for all time
             num_all_time_entries = current_user.calories_collection.count_documents({})
             total_all_time_calories = sum(entry['total_calories'] for entry in current_user.calories_collection.find())
             average_calories_all_time = total_all_time_calories / num_all_time_entries if num_all_time_entries > 0 else 0
 
             average_data = {
-                'average_calories_month': average_calories_month,
-                'average_calories_year': average_calories_year,
+                'average_calories_by_month_year': average_calories_by_month_year,
                 'average_calories_all_time': average_calories_all_time
             }
 
@@ -158,32 +177,25 @@ def download_csv():
 
         elif option == 'averages':
             # Logic to handle averages
-            csv_writer.writerow(['Period', 'Average Calories'])
+            csv_writer.writerow(['Year', 'Month', 'Average Calories'])
 
-            # Calculate average calories for the current month
-            start_of_month = get_start_of_month(datetime.now().year, datetime.now().month)
-            end_of_month = get_end_of_month(datetime.now().year, datetime.now().month)
-            average_calories_month = calculate_average_calories(start_of_month, end_of_month, current_user.calories_collection)
+            # Find the first entry to determine the start year
+            first_entry = current_user.calories_collection.find_one(sort=[('date', 1)])
+            start_year = datetime.strptime(first_entry['date'], '%Y-%m-%d').year if first_entry else datetime.now().year
 
-            # Calculate average calories for the current year
-            start_of_year = get_start_of_month(datetime.now().year, 1)
-            end_of_year = get_end_of_month(datetime.now().year, 12)
-            average_calories_year = calculate_average_calories(start_of_year, end_of_year, current_user.calories_collection)
+            end_year = datetime.now().year
+            month_names = ['January', 'February', 'March', 'April', 'May', 'June', 
+                        'July', 'August', 'September', 'October', 'November', 'December']
 
-            # Calculate average calories for all time
-            num_all_time_entries = current_user.calories_collection.count_documents({})
-            total_all_time_calories = sum(entry['total_calories'] for entry in current_user.calories_collection.find())
-            average_calories_all_time = total_all_time_calories / num_all_time_entries if num_all_time_entries > 0 else 0
-
-            # Format the averages to two decimal places
-            average_calories_month = Decimal(average_calories_month).quantize(Decimal('0.00'))
-            average_calories_year = Decimal(average_calories_year).quantize(Decimal('0.00'))
-            average_calories_all_time = Decimal(average_calories_all_time).quantize(Decimal('0.00'))
-
-            # Write averages to CSV
-            csv_writer.writerow(['Current Month', average_calories_month])
-            csv_writer.writerow(['Current Year', average_calories_year])
-            csv_writer.writerow(['All Time', average_calories_all_time])
+            for year in range(end_year, start_year - 1, -1):  # Iterate from latest to oldest year
+                for month in range(1, 13):
+                    start_of_month = get_start_of_month(year, month)
+                    end_of_month = get_end_of_month(year, month)
+                    average_calories = calculate_average_calories(start_of_month, end_of_month, current_user.calories_collection)
+                    # Round average calories to two decimal places
+                    average_calories = Decimal(average_calories).quantize(Decimal('0.00')) if average_calories else Decimal('0.00')
+                    month_name = month_names[month - 1]
+                    csv_writer.writerow([year, month_name, average_calories])
 
         else:
             return "Invalid option"
@@ -191,7 +203,6 @@ def download_csv():
         response = Response(csv_data.getvalue(), mimetype='text/csv')
         response.headers['Content-Disposition'] = 'attachment; filename=calories_data.csv'
         return response
-
     except Exception as e:
         print("Error:", str(e))
         raise
@@ -219,7 +230,6 @@ def delete_user():
                 if hasattr(current_user, 'calories_collection'):
                     # Delete the user's calories collection
                     _, _, _, user_calories_collection = get_mongo_connection()
-                    user_calories_collection_name = f'user_{user_id}_calories'
                     user_calories_collection = current_user.calories_collection
                     user_calories_collection.drop()
 
@@ -235,6 +245,9 @@ def delete_user():
 @user_calorie_bp.route('/confirm_delete_calories/<date>', methods=['POST'])
 @login_required
 def confirm_delete_calories(date):
+    # Retrieve the 'option' query parameter from the form data or URL query parameters
+    option = request.args.get('option', default='all_data')
+    
     try:
         # Convert the date to a datetime object for consistency
         date_to_delete = datetime.strptime(date, '%Y-%m-%d')
@@ -250,21 +263,5 @@ def confirm_delete_calories(date):
     except Exception as e:
         flash(str(e), 'error')
 
-    return redirect(url_for('user_calorie_bp.list_calories'))
-
-@user_calorie_bp.route('/your_route')
-@login_required
-def your_route():
-    page = request.args.get('page', 1, type=int)
-    per_page = 10  # Set the number of items per page
-
-    # Assuming `calories_collection` is your MongoDB collection
-    total_entries = current_user.calories_collection.count_documents({})
-    entries = current_user.calories_collection.find()\
-             .sort('date', ASCENDING)\
-             .skip((page - 1) * per_page)\
-             .limit(per_page)
-
-    total_pages = total_entries // per_page + (total_entries % per_page > 0)
-    
-    return render_template('your_template.html', entries=entries, page=page, total_pages=total_pages)
+    # Redirect to the list_calories page, maintaining the current option
+    return redirect(url_for('user_calorie_bp.list_calories', option=option))

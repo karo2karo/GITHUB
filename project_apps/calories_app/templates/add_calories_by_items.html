@@ -19,7 +19,7 @@
 
         /* Add more dark mode styles as needed */
     </style>
-    <title>{% block title %}Manage Calorie Items{% endblock %}</title>
+    <title>{% block title %}Add calories by items{% endblock %}</title>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -45,10 +45,18 @@
                 </button>
         </div>
     </nav>
-
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
     <div class="container">
         <h2>Add Calories by Items</h2>
-        <form method="post" action="{{ url_for('calorie_item_bp.manage_calorie_items') }}">
+        <form method="post" action="{{ url_for('calorie_item_bp.add_calories_by_items') }}">
             <div class="form-group">
                 <label for="selected_item">Select Calorie Item:</label>
                 <select class="form-control" name="selected_item" id="selected_item" required>
@@ -71,15 +79,6 @@
             <button type="submit" class="btn btn-primary">Add Calories</button>
         </form>
         
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <ul class="flashes">
-                    {% for message in messages %}
-                        <li>{{ message }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        {% endwith %}
     </div>
 
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>

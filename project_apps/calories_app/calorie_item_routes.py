@@ -4,6 +4,7 @@ from .database import get_mongo_connection, get_user_calories_collection, get_us
 from datetime import datetime
 from io import StringIO
 import csv, math
+from bson import ObjectId
 
 # Blueprint for calorie tracking routes
 calorie_item_bp = Blueprint('calorie_item_bp', __name__)
@@ -84,9 +85,9 @@ def download_calorie_items_csv():
         headers={"Content-disposition": "attachment; filename=calorie_items.csv"}
     )
 
-@calorie_item_bp.route('/manage_calorie_items', methods=['GET', 'POST'])
+@calorie_item_bp.route('/add_calories_by_items', methods=['GET', 'POST'])
 @login_required
-def manage_calorie_items():
+def add_calories_by_items():
     if request.method == 'POST':
         selected_item = request.form['selected_item']
         amount = float(request.form['amount'])
@@ -114,24 +115,32 @@ def manage_calorie_items():
                     'total_calories': selected_calorie_item['calorie_amount'] * amount
                 }
                 current_user.calories_collection.insert_one(daily_data)
-                flash(f"Daily calories for {date} added to the MongoDB database.", 'success')
+                flash(f"Daily calories for {date} added to the database.", 'success')
 
-        return redirect(url_for('calorie_item_bp.manage_calorie_items'))
+        return redirect(url_for('calorie_item_bp.add_calories_by_items'))
     
     # Fetch the user's calorie items for display
     calorie_items_collection = get_user_calorie_items_collection(current_user.id)
     user_calorie_items = list(calorie_items_collection.find())
     current_date = datetime.now()
 
-    return render_template('manage_calorie_items.html', user_calorie_items=user_calorie_items, current_date=current_date)
+    return render_template('add_calories_by_items.html', user_calorie_items=user_calorie_items, current_date=current_date)
 
 @calorie_item_bp.route('/delete_calorie_item/<item_id>', methods=['POST'])
 @login_required
 def delete_calorie_item(item_id):
-    # Logic to delete the item from the database
-    # Assuming `calorie_items_collection` is your MongoDB collection
-    calorie_items_collection = get_user_calorie_items_collection(current_user.id)
-    calorie_items_collection.delete_one({'_id': item_id})
-
-    flash('Calorie item deleted successfully.', 'success')
-    return redirect(url_for('calorie_item_bp.add_calorie'))
+    try:
+        # Assuming `get_user_calorie_items_collection` returns a reference to the collection for the current user
+        calorie_items_collection = get_user_calorie_items_collection(current_user.id)
+        
+        # Convert item_id to ObjectId and delete the item from the database
+        result = calorie_items_collection.delete_one({'_id': ObjectId(item_id)})
+        
+        if result.deleted_count > 0:
+            flash('Calorie item deleted successfully.', 'success')
+        else:
+            flash('No item found with the given ID.', 'warning')
+    except Exception as e:
+        # Log the error here if necessary
+        flash(f'An error occurred while deleting the item: {str(e)}', 'error')
+    return redirect(url_for('calorie_item_bp.add_calorie_item'))
